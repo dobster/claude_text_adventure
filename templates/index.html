@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Escape from Thornwood Manor</title>
+
+  <!--
+    Alpine.js must be deferred so it initialises after the DOM is parsed.
+    Load it before htmx so Alpine directives are live when htmx fires its
+    first "load" trigger.
+  -->
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/alpinejs/3.14.8/cdn.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/htmx/2.0.4/htmx.min.js"></script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #0d0d0d;
+      color: #33e866;
+      font-family: "Courier New", Courier, monospace;
+      font-size: 15px;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Output log (top 80 %) ───────────────────────────────────────────── */
+
+    #output {
+      height: 80dvh;
+      overflow-y: auto;
+      padding: 20px 20px 12px;
+      scrollbar-width: thin;
+      scrollbar-color: #1a4d28 #0d0d0d;
+    }
+    #output::-webkit-scrollbar       { width: 6px; }
+    #output::-webkit-scrollbar-track { background: #0d0d0d; }
+    #output::-webkit-scrollbar-thumb { background: #1a4d28; border-radius: 3px; }
+
+    /* Paragraphs emitted by the engine */
+    #output p {
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    /* Spacer for blank lines */
+    #output p.gap { line-height: 0.5; color: transparent; user-select: none; }
+    /* Echoed player command */
+    #output p.cmd { color: #88ffaa; }
+
+    /* ── Input area (bottom 20 %) ───────────────────────────────────────── */
+
+    #input-area {
+      height: 20dvh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 12px;
+      padding: 0 20px;
+      background: #111;
+      border-top: 1px solid #1a3d22;
+    }
+
+    #input-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .prompt {
+      color: #33e866;
+      font-weight: bold;
+      font-size: 1.1em;
+      flex-shrink: 0;
+    }
+
+    #cmd {
+      flex: 1;
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid #1a3d22;
+      outline: none;
+      color: #33e866;
+      font-family: inherit;
+      font-size: inherit;
+      padding: 4px 0;
+      caret-color: #33e866;
+    }
+    #cmd:focus        { border-bottom-color: #33e866; }
+    #cmd::placeholder { color: #1a5c30; }
+
+    #send-btn {
+      background: transparent;
+      border: 1px solid #33e866;
+      color: #33e866;
+      font-family: inherit;
+      font-size: inherit;
+      padding: 4px 16px;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background 0.1s;
+    }
+    #send-btn:hover:not(:disabled) { background: #1a3d22; }
+    #send-btn:disabled             { opacity: 0.35; cursor: default; }
+
+    /* Dim the Send button while a request is in-flight */
+    .htmx-request #send-btn { opacity: 0.35; pointer-events: none; }
+
+    .hint {
+      font-size: 0.75em;
+      color: #1a5c30;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <!--
+    #output
+    ───────
+    hx-get="/intro" hx-trigger="load"
+      On page load, fetches the intro (or a `look` for returning players) and
+      swaps it as innerHTML — populating the log before the player types.
+
+    @htmx:afterSwap
+      Fires on this element whenever htmx finishes a swap targeting it.
+      Covers both the initial /intro load and every /command response.
+      Scrolls to the bottom so the newest output is always visible.
+  -->
+  <div id="output"
+       x-data
+       @htmx:afterSwap="$el.scrollTop = $el.scrollHeight"
+       hx-get="/intro"
+       hx-trigger="load"
+       hx-swap="innerHTML">
+  </div>
+
+  <!--
+    #input-area / form
+    ──────────────────
+    hx-post="/command" hx-target="#output" hx-swap="beforeend"
+      Submits the command; the server returns a <p> fragment which htmx
+      appends to #output.
+
+    x-data / x-model="cmd"
+      Alpine binds the text field value so it can be cleared via `cmd = ''`
+      without reaching into the DOM manually.
+
+    @htmx:afterRequest
+      Fires on the form after htmx gets a response (success or error).
+      Clears the input and returns focus so the player can type immediately.
+  -->
+  <section id="input-area">
+    <form id="input-row"
+          x-data="{ cmd: '' }"
+          hx-post="/command"
+          hx-target="#output"
+          hx-swap="beforeend"
+          @htmx:afterRequest="cmd = ''; $nextTick(() => $refs.cmdInput.focus())">
+      <span class="prompt">&gt;</span>
+      <input id="cmd"
+             x-model="cmd"
+             x-ref="cmdInput"
+             name="input"
+             type="text"
+             autocomplete="off"
+             spellcheck="false"
+             autofocus
+             placeholder="type a command and press Enter…">
+      <button id="send-btn" type="submit">Send</button>
+    </form>
+    <p class="hint">
+      look &nbsp;·&nbsp; go north &nbsp;·&nbsp;
+      take &lt;item&gt; &nbsp;·&nbsp; examine &lt;item&gt; &nbsp;·&nbsp; help
+    </p>
+  </section>
+
+</body>
+</html>
