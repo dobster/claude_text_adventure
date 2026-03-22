@@ -7,10 +7,12 @@ import (
 	"html"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 	"sync"
 
 	"textadventure/engine"
+	"textadventure/templates"
 )
 
 // ─── Session store ─────────────────────────────────────────────────────────
@@ -66,7 +68,7 @@ func linesToHTML(lines []string) string {
 
 // ─── Handlers ──────────────────────────────────────────────────────────────
 
-// handleIndex serves templates/index.html (assumed relative to CWD).
+// handleIndex serves the embedded index.html.
 // It creates a new session on first visit and sets the session cookie.
 // The intro text is buffered inside the session; /intro will flush it.
 func handleIndex(w http.ResponseWriter, r *http.Request) {
@@ -76,7 +78,14 @@ func handleIndex(w http.ResponseWriter, r *http.Request) {
 		id := newSessionID()
 		saveSession(w, id, sess)
 	}
-	http.ServeFile(w, r, "templates/index.html")
+	data, err := templates.FS.ReadFile("index.html")
+	if err != nil {
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		log.Printf("embed read error: %v", err)
+		return
+	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Write(data)
 }
 
 // handleIntro returns the intro fragment for the output log.
@@ -140,7 +149,11 @@ func main() {
 	mux.HandleFunc("GET /intro", handleIntro)     // initial output fragment
 	mux.HandleFunc("POST /command", handleCommand) // player commands
 
-	addr := ":8080"
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+	addr := ":" + port
 	log.Printf("listening on http://localhost%s", addr)
 	log.Fatal(http.ListenAndServe(addr, mux))
 }
