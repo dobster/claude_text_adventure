@@ -5,12 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Escape from Thornwood Manor</title>
 
-  <!--
-    Alpine.js must be deferred so it initialises after the DOM is parsed.
-    Load it before htmx so Alpine directives are live when htmx fires its
-    first "load" trigger.
-  -->
-  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/alpinejs/3.14.8/cdn.min.js"></script>
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/htmx/2.0.4/htmx.min.js"></script>
 
   <style>
@@ -125,14 +119,14 @@
       On page load, fetches the intro (or a `look` for returning players) and
       swaps it as innerHTML — populating the log before the player types.
 
-    @htmx:afterSwap
+    hx-on::after-swap
       Fires on this element whenever htmx finishes a swap targeting it.
       Covers both the initial /intro load and every /command response.
-      Scrolls to the bottom so the newest output is always visible.
+      Uses hx-on:: so htmx converts kebab-case to camelCase internally —
+      bypassing HTML parser lowercasing that breaks addEventListener matching.
   -->
   <div id="output"
-       x-data
-       @htmx:afterSwap="$el.scrollTop = $el.scrollHeight"
+       hx-on::after-swap="this.scrollTop = this.scrollHeight"
        hx-get="/intro"
        hx-trigger="load"
        hx-swap="innerHTML">
@@ -145,25 +139,21 @@
       Submits the command; the server returns a <p> fragment which htmx
       appends to #output.
 
-    x-data / x-model="cmd"
-      Alpine binds the text field value so it can be cleared via `cmd = ''`
-      without reaching into the DOM manually.
-
-    @htmx:afterRequest
+    hx-on::after-request
       Fires on the form after htmx gets a response (success or error).
-      Clears the input and returns focus so the player can type immediately.
+      Resets the form (clears the input) and returns focus.
+      Uses hx-on:: (double colon = htmx event) so htmx converts kebab-case
+      to camelCase internally — bypassing the HTML parser's lowercasing,
+      which would break case-sensitive addEventListener matching.
   -->
   <section id="input-area">
     <form id="input-row"
-          x-data="{ cmd: '' }"
           hx-post="/command"
           hx-target="#output"
           hx-swap="beforeend"
-          @htmx:afterRequest="cmd = ''; $nextTick(() => $refs.cmdInput.focus())">
+          hx-on::after-request="this.reset(); document.getElementById('cmd').focus();">
       <span class="prompt">&gt;</span>
       <input id="cmd"
-             x-model="cmd"
-             x-ref="cmdInput"
              name="input"
              type="text"
              autocomplete="off"
