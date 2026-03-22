@@ -178,9 +178,9 @@ Below, someone has scrawled in a different hand: "-- D.T., 1887"`,
 		},
 	}
 
-	s.emit("╔══════════════════════════════════════════════════╗")
-	s.emit("║         ESCAPE FROM THORNWOOD MANOR              ║")
-	s.emit("╚══════════════════════════════════════════════════╝")
+	s.emit("==================================================")
+	s.emit("       ESCAPE FROM THORNWOOD MANOR")
+	s.emit("==================================================")
 	s.emit("")
 	s.emit("You wake with a start. The last thing you remember is exploring")
 	s.emit("the abandoned Thornwood Manor on a dare when a heavy door slammed")
@@ -359,9 +359,9 @@ func (s *GameSession) cmdGo(dir string) {
 
 	if s.PlayerRoomID == "garden" {
 		s.emit("")
-		s.emit("╔══════════════════════════════════════════════════╗")
-		s.emit("║  Congratulations! You have escaped Thornwood Manor!  ║")
-		s.emit("╚══════════════════════════════════════════════════╝")
+		s.emit("==================================================")
+		s.emit("  Congratulations! You escaped Thornwood Manor!")
+		s.emit("==================================================")
 		s.emit("")
 		s.emit("You stride through the garden gate into warm afternoon sunlight.")
 		s.emit("The old manor looms behind you, but you are free at last.")
