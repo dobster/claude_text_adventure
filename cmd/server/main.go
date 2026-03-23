@@ -72,10 +72,12 @@ func linesToHTML(lines []string) string {
 // It creates a new session on first visit and sets the session cookie.
 // The intro text is buffered inside the session; /intro will flush it.
 func handleIndex(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("handleIndex")
 	_, _, ok := loadSession(r)
 	if !ok {
 		sess := engine.NewSession() // intro is buffered, not yet flushed
 		id := newSessionID()
+		fmt.Printf("handleIndex newsessionid %s\n", id)
 		saveSession(w, id, sess)
 	}
 	data, err := templates.FS.ReadFile("index.html")
@@ -93,10 +95,12 @@ func handleIndex(w http.ResponseWriter, r *http.Request) {
 // returning session (empty buffer) it runs `look` to re-orient the player.
 func handleIntro(w http.ResponseWriter, r *http.Request) {
 	sess, id, ok := loadSession(r)
+	fmt.Printf("handleIntro id=%s ok=%t\n", id, ok)
 	if !ok {
 		// Cookie missing or session evicted (e.g. server restart).
 		sess = engine.NewSession()
 		id = newSessionID()
+		fmt.Printf("handleInto new session id %s\n", id)
 		saveSession(w, id, sess)
 	}
 
@@ -114,15 +118,18 @@ func handleIntro(w http.ResponseWriter, r *http.Request) {
 // handleCommand processes one player command and returns an HTML fragment.
 func handleCommand(w http.ResponseWriter, r *http.Request) {
 	sess, id, ok := loadSession(r)
+	fmt.Printf("handleCommand id=%s ok=%t\n", id, ok)
 	if !ok {
 		// Stale or missing cookie — restart transparently.
 		sess = engine.NewSession()
 		sess.FlushOutput() // discard intro; player is mid-session
 		id = newSessionID()
+		fmt.Printf("handlecommand new session id=%s\n", id)
 		saveSession(w, id, sess)
 	}
 
 	input := strings.TrimSpace(r.FormValue("input"))
+	fmt.Printf("handlecommand input=%s\n", input)
 	if input == "" {
 		w.WriteHeader(http.StatusNoContent)
 		return
@@ -145,8 +152,8 @@ func handleCommand(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /{$}", handleIndex)       // exact "/"
-	mux.HandleFunc("GET /intro", handleIntro)     // initial output fragment
+	mux.HandleFunc("GET /{$}", handleIndex)        // exact "/"
+	mux.HandleFunc("GET /intro", handleIntro)      // initial output fragment
 	mux.HandleFunc("POST /command", handleCommand) // player commands
 
 	port := os.Getenv("PORT")

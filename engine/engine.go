@@ -26,13 +26,13 @@ type Exit struct {
 
 // Room is a location in the world.
 type Room struct {
-	ID          string            `json:"id"`
-	Name        string            `json:"name"`
-	Description string            `json:"description"`
-	DarkDesc    string            `json:"darkDesc,omitempty"`
-	Exits       map[string]Exit   `json:"exits"`
-	Items       map[string]Item   `json:"items"`
-	Dark        bool              `json:"dark,omitempty"`
+	ID          string          `json:"id"`
+	Name        string          `json:"name"`
+	Description string          `json:"description"`
+	DarkDesc    string          `json:"darkDesc,omitempty"`
+	Exits       map[string]Exit `json:"exits"`
+	Items       map[string]Item `json:"items"`
+	Dark        bool            `json:"dark,omitempty"`
 }
 
 // ─── Game Session ──────────────────────────────────────────────────────────
@@ -40,12 +40,12 @@ type Room struct {
 // GameSession holds all mutable game state. It is safe to serialize with
 // encoding/json — no pointers, no unexported fields that matter for state.
 type GameSession struct {
-	PlayerRoomID string            `json:"playerRoomID"`
-	Inventory    map[string]Item   `json:"inventory"`
-	Rooms        map[string]Room   `json:"rooms"`
-	Won          bool              `json:"won"`
-	Running      bool              `json:"running"`
-	TurnCount    int               `json:"turnCount"`
+	PlayerRoomID string          `json:"playerRoomID"`
+	Inventory    map[string]Item `json:"inventory"`
+	Rooms        map[string]Room `json:"rooms"`
+	Won          bool            `json:"won"`
+	Running      bool            `json:"running"`
+	TurnCount    int             `json:"turnCount"`
 
 	// output is transient I/O state; excluded from serialization.
 	output []string `json:"-"`
@@ -179,7 +179,7 @@ Below, someone has scrawled in a different hand: "-- D.T., 1887"`,
 	}
 
 	s.emit("==================================================")
-	s.emit("       ESCAPE FROM THORNWOOD MANOR")
+	s.emit("       ESCAPE FROM THORNWOOD MANOR v2.0")
 	s.emit("==================================================")
 	s.emit("")
 	s.emit("You wake with a start. The last thing you remember is exploring")
